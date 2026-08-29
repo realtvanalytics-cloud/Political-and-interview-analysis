@@ -24,6 +24,52 @@ import requests
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+# ─────────────────────────────────────────────────────────────────────────────
+# PASSWORD GATE  —  paste this block into EACH app right AFTER the imports
+# (after `import streamlit as st`) and BEFORE any other st.* calls.
+#
+# Then add ONE line to your Streamlit Secrets (Settings → Secrets):
+#     APP_PASSWORD = "choose-a-shared-password"
+#
+# Everyone on the team uses this one shared password. To change it, just
+# edit the Secret — no code change, no redeploy of code needed.
+# ─────────────────────────────────────────────────────────────────────────────
+import streamlit as st  # (already imported in your app; harmless if repeated)
+
+
+def check_password():
+    """Blocks the app until the correct shared password is entered."""
+    # If already unlocked this session, let them through.
+    if st.session_state.get("_authed"):
+        return
+
+    # Read the expected password from Secrets.
+    try:
+        expected = st.secrets["APP_PASSWORD"]
+    except Exception:
+        st.error(
+            "No app password is set. In Streamlit → Settings → Secrets add:  "
+            'APP_PASSWORD = "choose-a-shared-password"'
+        )
+        st.stop()
+
+    st.title("🔒 Real TV — Team Access")
+    st.caption("Enter the team password to continue.")
+    pw = st.text_input("Password", type="password")
+    if st.button("Enter"):
+        if pw == expected:
+            st.session_state["_authed"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password. Try again.")
+    # Stop the rest of the app from rendering until authed.
+    st.stop()
+
+
+check_password()
+# ─────────────────────────────────────────────────────────────────────────────
+# everything below this line only runs once the password is correct
+# ─────────────────────────────────────────────────────────────────────────────
 
 IST = timezone(timedelta(hours=5, minutes=30))
 API_BASE = "https://www.googleapis.com/youtube/v3"
@@ -37,7 +83,7 @@ CHANNELS = [
     {"label": "Real TV (you)",  "handle": "@realtvtelugunews", "id": None},
     {"label": "TV9 Telugu",     "handle": "@tv9telugu",        "id": "UCPXTXMecYqnRKNdqdVOGSFg"},
     {"label": "NTV Telugu",     "handle": "@ntvteluguofficial","id": "UCumtYpCY26F6Jr3satUgMvA"},
-    {"label": "TV5 News",       "handle": "@tv5newschannel",   "id": None},
+    {"label": "TV5 News",       "handle": "@tv5news",   "id": None},
     {"label": "V6 News",        "handle": "@V6News",           "id": None},
     {"label": "Sakshi TV",      "handle": "@SakshiTV",         "id": None},
     {"label": "ABN Telugu",     "handle": "@abntelugutv",      "id": None},
